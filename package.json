@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "tailwind": "npx tailwindcss -i ./src/input.css -o ./build/css/style.css --watch",
+    "prettier": "npx prettier --write **/*.html"
   },
   "repository": {
     "type": "git",
@@ -19,6 +20,7 @@
   },
   "homepage": "https://github.com/Jwierzcho/photography-website-project#readme",
   "devDependencies": {
+    "prettier-plugin-tailwindcss": "^0.6.11",
     "tailwindcss": "^3.4.1"
   }
 }
