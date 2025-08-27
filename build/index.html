@@ -1,45 +1,440 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="pl">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <link rel="stylesheet" href="css/style.css">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>j.wierzchowsky — portfolio</title>
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="preload" as="image" href="img/edits/1-after.jpg">
+    <link rel="preload" as="image" href="img/edits/1-before.jpg">
+    <link rel="preload" as="image" href="img/edits/2-after.jpg">
+    <link rel="preload" as="image" href="img/edits/2-before.jpg">
+    <link rel="preload" as="image" href="img/edits/3-after.jpg">
+    <link rel="preload" as="image" href="img/edits/3-before.jpg">
+    <style>
+        /* drobne „utility”, żeby nie tykać tailwinda */
+        .hero-slide {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            transition: opacity .8s ease
+        }
+
+        .hero-slide.active {
+            opacity: 1
+        }
+
+        /* obraz w środku <picture> */
+        .hero-slide>img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center
+        }
+
+        .compare {
+            --pos: 50%
+        }
+
+        .compare .mask {
+            clip-path: polygon(0 0, var(--pos) 0, var(--pos) 100%, 0 100%)
+        }
+
+        .compare .handle {
+            left: calc(var(--pos));
+            transform: translateX(-50%)
+        }
+
+        .header-glass {
+            background: rgba(0, 0, 0, var(--nav-alpha, 0));
+            backdrop-filter: blur(8px) saturate(160%);
+            -webkit-backdrop-filter: blur(8px) saturate(160%);
+            border-bottom: 1px solid rgba(255, 255, 255, calc(var(--nav-alpha, 0) * .2));
+            transition: background-color .2s ease, border-color .2s ease;
+        }
+    </style>
 </head>
-<body class="min-h-screen bg-slate-50 dark:bg-black dark:text-white">
-    <header class="bg-emerald-900 text-white sticky top-0 z-10">
-        <section class="max-w-4xl mx-auto p-4 flex justify-between items-center">
-            <h1 class="text-3xl font-medium">
-                <a href="#hero">j.wierzchowsky</a>
-            </h1>
-            <div>
-                <button id="mobile-open-button"
-                class="text-3xl sm:hidden focus:outline-none">
-                    &#9776;
+
+<body class="bg-black text-white selection:bg-white selection:text-black">
+    <!-- NAVBAR (transparent, nad sliderem) -->
+    <header id="siteHeader" class="fixed inset-x-0 top-0 z-50 header-glass" style="--nav-alpha:0">
+        <nav class="mx-auto max-w-7xl px-4 sm:px-6">
+            <div class="flex items-center justify-between py-4">
+                <!-- burger -->
+                <button id="burger" aria-label="Open menu"
+                    class="p-2 -ml-2 rounded-lg hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/30">
+                    <!-- 3 kreski -->
+                    <span class="block h-0.5 w-6 bg-white mb-1"></span>
+                    <span class="block h-0.5 w-6 bg-white mb-1"></span>
+                    <span class="block h-0.5 w-6 bg-white"></span>
                 </button>
-                <nav class="sm:black space-x-8 text-xl" 
-                    aria-label="main">
-                    <a href="#gallery" class="hover:opacity-90">
-                        Gallery
-                    </a>
-                    <a href="#editing" class="hover:opacity-90">
-                        My edits
-                    </a>
-                    <a href="#contact" class="hover:opacity-90">
-                        Contact me!
-                    </a>
-                </nav>
+
+                <!-- logo center -->
+                <a href="#top" aria-label="Strona główna" class="justify-self-center inline-flex items-center">
+                    <img src="img/jwierzchowsky.png" alt="j.wierzchowsky"
+                        class="h-16 sm:h-20 max-h-20 sm:max-h-24 w-auto select-none pointer-events-none" />
+                    <!-- jeśli masz PNG/JPG, możesz dodać 'invert', by było białe na zdjęciu -->
+                    <!-- class="... invert" -->
+                </a>
+
+                <!-- filler, żeby wycentrować logo (puste miejsce po prawej) -->
+                <div class="w-10"></div>
             </div>
-        </section>
+        </nav>
+
+        <!-- mobile menu (pełnoekranowe) -->
+        <div id="mobileMenu" class="hidden fixed inset-0 z-40 bg-black/80 backdrop-blur">
+            <div class="absolute inset-x-0 top-0 mx-auto max-w-7xl px-6 py-5 flex items-center justify-between">
+                <span class="text-lg font-semibold">Menu</span>
+                <button id="closeMenu"
+                    class="p-2 rounded-lg hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/30">
+                    <span class="block h-0.5 w-6 bg-white rotate-45 translate-y-0.5"></span>
+                    <span class="block h-0.5 w-6 bg-white -rotate-45 -translate-y-0.5"></span>
+                </button>
+            </div>
+            <div class="h-full w-full flex items-center justify-center">
+                <ul class="space-y-6 text-center text-2xl">
+                    <li><a href="#about" class="hover:underline" data-close>O mnie</a></li>
+                    <li><a href="#compare" class="hover:underline" data-close>Przed / Po</a></li>
+                    <li><a href="#social" class="hover:underline" data-close>Social</a></li>
+                    <li><a href="#contact" class="hover:underline" data-close>Kontakt</a></li>
+                </ul>
+            </div>
+        </div>
     </header>
-    <main class="max-w-4xl mx-auto">
-        <section id="hero" class="flex flex-col-reverse justify-center sm:flex-row px-6 items-center gap-8 mb-12">
-            <article class="sm:w-1/2">
-                <h2 class="max-w-md text-4xl font-bold text-center sm:text-5xl sm:text-left text-slate-900 dark:text-white">
-                    Jeste fotografe test test
-                </h2>
-            </article>
-        </section>
-    </main>
+
+    <!-- HERO z pełnoekranowym sliderem -->
+    <section id="top" class="relative h-screen w-full overflow-hidden">
+        <!-- SLIDE 1 -->
+        <picture class="hero-slide active">
+            <!-- telefony / pion -->
+            <source media="(orientation: portrait)" srcset="img/hero/hero1-vert.jpg">
+            <!-- laptopy / poziom -->
+            <source media="(orientation: landscape)" srcset="img/hero/hero1-horiz.jpg">
+            <!-- fallback (np. starsze przeglądarki) -->
+            <img src="img/hero/hero1-horiz.jpg" alt="" loading="eager" fetchpriority="high">
+        </picture>
+
+        <!-- SLIDE 2 -->
+        <picture class="hero-slide">
+            <source media="(orientation: portrait)" srcset="img/hero/hero2-vert.jpg">
+            <source media="(orientation: landscape)" srcset="img/hero/hero2-horiz.jpg">
+            <img src="img/hero/hero2-horiz.jpg" alt="">
+        </picture>
+
+        <!-- SLIDE 3 -->
+        <picture class="hero-slide">
+            <source media="(orientation: portrait)" srcset="img/hero/hero3-vert.jpg">
+            <source media="(orientation: landscape)" srcset="img/hero/hero3-horiz.jpg">
+            <img src="img/hero/hero3-horiz.jpg" alt="">
+        </picture>
+        <picture class="hero-slide">
+            <source media="(orientation: portrait)" srcset="img/hero/hero4-vert.jpg">
+            <source media="(orientation: landscape)" srcset="img/hero/hero4-horiz.jpg">
+            <img src="img/hero/hero4-horiz.jpg" alt="">
+        </picture>
+        <!-- gradient + podpis mogą zostać tak jak masz -->
+        <div class="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-black/70 to-transparent">
+        </div>
+        <div class="absolute inset-x-0 bottom-10 mx-auto max-w-7xl px-6">
+            <h1 class="text-3xl sm:text-5xl font-extrabold drop-shadow-xl">Jestem fotografem</h1>
+        </div>
+    </section>
+
+    <!-- SEKCJA O MNIE (pojawianie przy scrollu) -->
+    <section id="about" class="bg-black">
+        <div class="mx-auto max-w-5xl px-6 py-24">
+            <h2 class="text-3xl sm:text-4xl font-bold mb-6 reveal opacity-0 translate-y-6 transition-all duration-700">O
+                mnie</h2>
+            <p
+                class="text-neutral-300 leading-relaxed reveal opacity-0 translate-y-6 transition-all duration-700 [transition-delay:150ms]">
+                Cześć! Nazywam się Jan Wierzchowski. Specjalizuję się w fotografii motoryzacyjnej i miejskiej.
+                Lubię mocny kontrast, czyste linie i naturalne kolory. Pracuję w Warszawie i okolicach.
+            </p>
+        </div>
+    </section>
+
+    <!-- SEKCJA PRZED/PO z suwakiem -->
+    <section id="edits" class="bg-black">
+        <div class="mx-auto max-w-6xl px-6 py-20">
+            <h2 class="text-3xl sm:text-4xl font-bold">Edits</h2>
+            <p class="text-neutral-300 mt-2">Obczaj to! Chwila obróbki w programie do edycji takich jak Lightroom i
+                zdjęcia mogą nabrać charakteru!</p>
+
+            <!-- główny slider przed/po -->
+            <div id="edit-compare"      
+                class="compare relative overflow-hidden rounded-2xl mt-8 max-w-3xl mx-auto">
+                <img id="after-img" src="img/edits/1-after.jpg" class="absolute inset-0 w-full h-full object-cover"
+                    alt="po" />
+                <img id="before-img" src="img/edits/1-before.jpg"
+                    class="mask absolute inset-0 w-full h-full object-cover" alt="przed" />
+                <div class="handle absolute inset-y-0">
+                    <div class="h-full w-0.5 bg-white/80"></div>
+                    <div class="absolute top-1/2 -translate-y-1/2 -left-3">
+                        <div class="w-6 h-6 rounded-full bg-white/90 shadow"></div>
+                    </div>
+                </div>
+                <input type="range" min="0" max="100" value="50" aria-label="Suwak porównania"
+                    class="absolute inset-x-0 bottom-3 w-[96%] mx-auto accent-white opacity-0 cursor-ew-resize">
+                <!-- dynamiczny „spacer” dla proporcji -->
+                <div id="ratio-spacer" class="invisible relative" style="padding-top:56.25%"></div>
+            </div>
+
+            <div class="mt-5 flex justify-center gap-3 sm:gap-4">
+                <!-- 1 -->
+                <button
+                    class="thumb group relative w-24 sm:w-28 md:w-32 aspect-[4/3] rounded-xl overflow-hidden ring-2 ring-transparent data-[active=true]:ring-white/80"
+                    data-before="img/edits/1-before.jpg" data-after="img/edits/1-after.jpg" data-active="true"
+                    aria-pressed="true">
+                    <img src="img/edits/1-after.jpg" class="w-full h-full object-cover" alt="Ujęcie 1" />
+                    <span
+                        class="pointer-events-none absolute inset-0 bg-black/0 group-hover:bg-black/10 transition"></span>
+                </button>
+
+                <!-- 2 -->
+                <button
+                    class="thumb group relative w-24 sm:w-28 md:w-32 aspect-[4/3] rounded-xl overflow-hidden ring-2 ring-transparent data-[active=true]:ring-white/80"
+                    data-before="img/edits/2-before.jpg" data-after="img/edits/2-after.jpg" aria-pressed="false">
+                    <img src="img/edits/2-after.jpg" class="w-full h-full object-cover" alt="Ujęcie 2" />
+                    <span
+                        class="pointer-events-none absolute inset-0 bg-black/0 group-hover:bg-black/10 transition"></span>
+                </button>
+
+                <!-- 3 -->
+                <button
+                    class="thumb group relative w-24 sm:w-28 md:w-32 aspect-[4/3] rounded-xl overflow-hidden ring-2 ring-transparent data-[active=true]:ring-white/80"
+                    data-before="img/edits/3-before.jpg" data-after="img/edits/3-after.jpg" aria-pressed="false">
+                    <img src="img/edits/3-after.jpg" class="w-full h-full object-cover" alt="Ujęcie 3" />
+                    <span
+                        class="pointer-events-none absolute inset-0 bg-black/0 group-hover:bg-black/10 transition"></span>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- SOCIAL: placeholder (ostatnie posty IG/FB) -->
+    <section id="social" class="bg-black">
+        <div class="mx-auto max-w-6xl px-6 py-20">
+            <h2 class="text-3xl sm:text-4xl font-bold mb-4">Ostatnie posty</h2>
+            <p class="text-neutral-400 mb-8">Sprawdzaj Instagram by zobaczyć najlepsze moje prace! Oraz na Facebook,
+                gdzie publikuje albumy z eventów motoryzacyjnych!</p>
+
+            <div class="grid sm:grid-cols-2 gap-8">
+                <!-- INSTAGRAM – EMBED PROFILU -->
+                <div class="bg-black rounded-2xl shadow-lg overflow-hidden">
+                    <div class="p-2 sm:p-3">
+                        <blockquote class="instagram-media"
+                            data-instgrm-permalink="https://www.instagram.com/j.wierzchowsky/" data-instgrm-version="14"
+                            style="background:#000; border:0; margin:0; max-width:540px; width:100%;">
+                        </blockquote>
+                    </div>
+                </div>
+                <!-- FACEBOOK -->
+                <div class="bg-black rounded-2xl shadow-lg overflow-hidden relative">
+                    <div class="p-3">
+                        <div class="fb-page" data-href="https://www.facebook.com/profile.php?id=100087153275058"
+                            data-tabs="timeline" data-width="540" data-adapt-container-width="true"
+                            data-small-header="true" data-hide-cover="false" data-show-facepile="false">
+                        </div>
+                    </div>
+
+                    <!-- Fallback: jeśli SDK nie wczyta feedu -->
+                    <div id="fb-fallback"
+                        class="hidden absolute inset-0 bg-white/95 text-black flex items-center justify-center p-6">
+                        <div class="text-center">
+                            <p class="mb-4">Nie udało się wczytać feedu Facebooka.</p>
+                            <a href="https://www.facebook.com/profile.php?id=100087153275058" target="_blank"
+                                rel="noreferrer" class="inline-block px-4 py-2 rounded-xl bg-black text-white">Otwórz na
+                                Facebooku</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- STOPKA -->
+    <footer id="contact" class="bg-black border-t border-white/10">
+        <div class="mx-auto max-w-6xl px-6 py-12 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p class="text-neutral-400">&copy; <span id="year"></span> j.wierzchowsky. Wszystkie prawa zastrzeżone.</p>
+            <div class="flex items-center gap-4 text-neutral-300">
+                <a href="mailto:j.wierzchowsky@gmail.com" class="hover:underline">Email</a>
+                <a href="https://www.instagram.com/j.wierzchowsky/" target="_blank" rel="noreferrer"
+                    class="hover:underline">Instagram</a>
+                <a href="https://www.facebook.com/profile.php?id=100087153275058" target="_blank" rel="noreferrer"
+                    class="hover:underline">Facebook</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- SKRYPTY -->
+    <script>
+        // navbar mobile
+        const burger = document.getElementById('burger');
+        const mobileMenu = document.getElementById('mobileMenu');
+        const closeMenu = document.getElementById('closeMenu');
+        const closeLinks = () => mobileMenu.classList.add('hidden');
+        burger?.addEventListener('click', () => mobileMenu.classList.remove('hidden'));
+        closeMenu?.addEventListener('click', closeLinks);
+        mobileMenu?.querySelectorAll('[data-close]')?.forEach(a => a.addEventListener('click', closeLinks));
+
+        // hero slider (prosty crossfade)
+        (function () {
+            const slides = [...document.querySelectorAll('.hero-slide')];
+            let i = 0;
+            function show(n) {
+                slides.forEach((s, idx) => s.classList.toggle('active', idx === n));
+            }
+            setInterval(() => { i = (i + 1) % slides.length; show(i); }, 4500);
+            show(0);
+        })();
+
+        // "reveal on scroll" dla sekcji O mnie
+        (function () {
+            const els = document.querySelectorAll('#about .reveal');
+            const io = new IntersectionObserver((entries) => {
+                entries.forEach(e => {
+                    if (e.isIntersecting) {
+                        e.target.classList.remove('opacity-0', 'translate-y-6');
+                        io.unobserve(e.target);
+                    }
+                });
+            }, { threshold: 0.2 });
+            els.forEach(el => io.observe(el));
+        })();
+    </script>
+    <script>
+        (function () {
+            const box = document.getElementById('edit-compare');
+            if (!box) return;
+
+            const beforeImg = document.getElementById('before-img');
+            const afterImg = document.getElementById('after-img');
+            const spacer = document.getElementById('ratio-spacer');
+            const range = box.querySelector('input[type="range"]');
+            const thumbs = document.querySelectorAll('#edits .thumb');
+
+            let pos = 50; // pozycja suwaka (0–100)
+
+            // PRELOAD z pewnym fallbackiem na onload (bez decode)
+            const cache = new Map(); // src -> Promise<{w,h}>
+            function preload(src) {
+                if (cache.has(src)) return cache.get(src);
+                const p = new Promise((resolve) => {
+                    const img = new Image();
+                    img.onload = () => resolve({ w: img.naturalWidth || 1, h: img.naturalHeight || 1 });
+                    img.onerror = () => resolve({ w: 16, h: 9 }); // bezpieczne domyślne
+                    img.src = src;
+                });
+                cache.set(src, p);
+                return p;
+            }
+
+            function setPos(p) {
+                pos = Math.max(0, Math.min(100, p));
+                box.style.setProperty('--pos', pos + '%');
+                if (range) range.value = pos;
+            }
+
+            async function switchPair(b, a) {
+                // czekamy, aż OBA obrazy się wczytają (bez migania)
+                const [{ w, h }] = await Promise.all([preload(a), preload(b)]);
+                // ustaw proporcję zanim podmienimy źródła
+                spacer.style.paddingTop = ((h / w) * 100).toFixed(2) + '%';
+                // jednoczesna podmiana obrazów
+                beforeImg.src = b;
+                afterImg.src = a;
+                // zachowaj pozycję linii
+                setPos(pos);
+            }
+
+            // range + drag
+            range?.addEventListener('input', (e) => setPos(+e.target.value));
+            const move = (x) => {
+                const r = box.getBoundingClientRect();
+                setPos(((x - r.left) / r.width) * 100);
+            };
+            box.addEventListener('pointerdown', (e) => { box.setPointerCapture(e.pointerId); move(e.clientX); });
+            box.addEventListener('pointermove', (e) => { if (e.buttons) move(e.clientX); });
+
+            // miniatury
+            thumbs.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    thumbs.forEach(t => { t.dataset.active = 'false'; t.setAttribute('aria-pressed', 'false'); });
+                    btn.dataset.active = 'true';
+                    btn.setAttribute('aria-pressed', 'true');
+                    switchPair(btn.dataset.before, btn.dataset.after);
+                });
+            });
+
+            // preload wszystkich par + start
+            thumbs.forEach(t => { preload(t.dataset.after); preload(t.dataset.before); });
+            const active = document.querySelector('#edits .thumb[data-active="true"]') || thumbs[0];
+            if (active) switchPair(active.dataset.before, active.dataset.after);
+            setPos(50);
+        })();
+    </script>
+
+    <script>
+        // rok w stopce
+        document.getElementById('year').textContent = new Date().getFullYear();
+    </script>
+    </script>
+    <script>
+        // płynne tło paska – 0 na górze, 1 przy sekcji #about
+        (function () {
+            const header = document.getElementById('siteHeader');
+            const about = document.getElementById('about');
+
+            const headerH = () => header.offsetHeight;
+            const aboutTop = () => about.getBoundingClientRect().top + window.scrollY;
+
+            let limit = 1; // punkt, w którym tło ma 100% krycia
+
+            function recalc() {
+                // tło osiąga 1.0 dokładnie gdy górna krawędź #about dochodzi pod pasek
+                limit = Math.max(1, aboutTop() - headerH());
+                onScroll();
+            }
+            function onScroll() {
+                const y = window.scrollY || 0;
+                // liniowo od 0 do 1 w zakresie [0, limit]
+                const p = Math.min(1, Math.max(0, y / limit));
+                header.style.setProperty('--nav-alpha', p.toFixed(3));
+                header.classList.toggle('shadow-lg', p > 0.05); // delikatny cień gdy nie jest 100% przezroczysty
+            }
+
+            window.addEventListener('scroll', onScroll, { passive: true });
+            window.addEventListener('resize', recalc);
+            window.addEventListener('load', recalc);
+            recalc();
+        })();
+    </script>
+    <!-- Instagram embed -->
+    <script async src="https://www.instagram.com/embed.js"></script>
+
+    <!-- Facebook SDK + deterministyczne init -->
+    <div id="fb-root"></div>
+    <script>
+        window.fbAsyncInit = function () {
+            FB.init({ xfbml: true, version: 'v19.0' });
+            // Spróbuj wymusić render po inicjalizacji
+            FB.XFBML.parse();
+        };
+    </script>
+    <script async defer crossorigin="anonymous" src="https://connect.facebook.net/pl_PL/sdk.js"></script>
+
+    <script>
+        // Fallback: jeśli po 3 s nie ma iframa FB, pokaż przycisk do strony
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                const hasIframe = document.querySelector('.fb-page iframe');
+                document.getElementById('fb-fallback')?.classList.toggle('hidden', !!hasIframe);
+                console.log('FB loaded:', typeof FB !== 'undefined', 'iframe:', !!hasIframe);
+            }, 3000);
+        });
+    </script>
 </body>
+
 </html>
