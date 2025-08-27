@@ -20,6 +20,7 @@
   },
   "homepage": "https://github.com/Jwierzcho/photography-website-project#readme",
   "devDependencies": {
+    "autoprefixer": "^10.4.21",
     "prettier-plugin-tailwindcss": "^0.6.11",
     "tailwindcss": "^3.4.1"
   }
