@@ -6,14 +6,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>j.wierzchowsky — portfolio</title>
     <link rel="stylesheet" href="css/style.css" />
+
+    <!-- Preloady do Edits -->
     <link rel="preload" as="image" href="img/edits/1-after.jpg">
     <link rel="preload" as="image" href="img/edits/1-before.jpg">
     <link rel="preload" as="image" href="img/edits/2-after.jpg">
     <link rel="preload" as="image" href="img/edits/2-before.jpg">
     <link rel="preload" as="image" href="img/edits/3-after.jpg">
     <link rel="preload" as="image" href="img/edits/3-before.jpg">
+
     <style>
-        /* drobne „utility”, żeby nie tykać tailwinda */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        .anchor-offset {
+            scroll-margin-top: 80px;
+        }
+
+        /* HERO crossfade */
         .hero-slide {
             position: absolute;
             inset: 0;
@@ -25,7 +36,6 @@
             opacity: 1
         }
 
-        /* obraz w środku <picture> */
         .hero-slide>img {
             width: 100%;
             height: 100%;
@@ -33,19 +43,7 @@
             object-position: center
         }
 
-        .compare {
-            --pos: 50%
-        }
-
-        .compare .mask {
-            clip-path: polygon(0 0, var(--pos) 0, var(--pos) 100%, 0 100%)
-        }
-
-        .compare .handle {
-            left: calc(var(--pos));
-            transform: translateX(-50%)
-        }
-
+        /* Navbar szkło */
         .header-glass {
             background: rgba(0, 0, 0, var(--nav-alpha, 0));
             backdrop-filter: blur(8px) saturate(160%);
@@ -53,77 +51,176 @@
             border-bottom: 1px solid rgba(255, 255, 255, calc(var(--nav-alpha, 0) * .2));
             transition: background-color .2s ease, border-color .2s ease;
         }
+
+        /* Before/After */
+        .compare {
+            --pos: 50%
+        }
+
+        .compare .mask {
+            clip-path: polygon(0 0, var(--pos) 0, var(--pos) 100%, 0 100%);
+            transition: clip-path .12s ease;
+            will-change: clip-path;
+        }
+
+        .compare .handle {
+            left: calc(var(--pos));
+            transform: translateX(-50%);
+            transition: left .12s ease
+        }
+
+        /* === DROPDOWN MENU (pod headerem) === */
+        :root {
+            --hdrh: 64px;
+        }
+
+        /* nadpisywane w JS realną wysokością paska */
+
+        /* cień/zakrycie strony – zaczyna się POD headerem */
+        #mobileShade {
+            position: fixed;
+            left: 0;
+            right: 0;
+            top: var(--hdrh);
+            bottom: 0;
+            z-index: 60;
+            background: rgba(0, 0, 0, .6);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity .2s ease;
+            backdrop-filter: blur(2px);
+            -webkit-backdrop-filter: blur(2px);
+        }
+
+        #mobileShade.open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* panel menu – pełna szerokość, rozwijany w dół */
+        #mobilePanel {
+            position: fixed;
+            left: 0;
+            right: 0;
+            top: var(--hdrh);
+            z-index: 61;
+            background: #000;
+            border-bottom: 1px solid rgba(255, 255, 255, .1);
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+            transform: translateY(-10px);
+            transition:
+                transform .45s cubic-bezier(.22, 1, .36, 1),
+                max-height .45s cubic-bezier(.22, 1, .36, 1),
+                opacity .35s ease;
+        }
+
+        #mobilePanel.open {
+            max-height: 85vh;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Burger → X */
+        #burger .line {
+            display: block;
+            width: 24px;
+            /* ~ w-6 */
+            height: 2px;
+            /* ~ h-0.5 */
+            margin-bottom: 4px;
+            /* ~ mb-1 */
+            background: #fff;
+            transition: transform .45s cubic-bezier(.22, 1, .36, 1),
+                opacity .35s ease;
+            transform-origin: center;
+        }
+
+        #burger .line:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Odległość dosunięcia przy animacji X */
+        #burger {
+            --x-shift: 7px;
+        }
+
+        /* Stan otwarty: burger → X */
+        #burger[aria-expanded="true"] .line-top {
+            transform: translateY(var(--x-shift)) rotate(45deg);
+        }
+
+        #burger[aria-expanded="true"] .line-mid {
+            opacity: 0;
+        }
+
+        #burger[aria-expanded="true"] .line-bot {
+            transform: translateY(calc(var(--x-shift) * -1)) rotate(-45deg);
+        }
+
+        /* Delikatny „slide down” dropdownu */
+        #mobilePanel {
+            transform: translateY(-8px);
+        }
+
+        #mobilePanel.open {
+            transform: translateY(0);
+        }
     </style>
 </head>
 
 <body class="bg-black text-white selection:bg-white selection:text-black">
-    <!-- NAVBAR (transparent, nad sliderem) -->
+    <!-- NAVBAR -->
     <header id="siteHeader" class="fixed inset-x-0 top-0 z-50 header-glass" style="--nav-alpha:0">
         <nav class="mx-auto max-w-7xl px-4 sm:px-6">
             <div class="flex items-center justify-between py-4">
                 <!-- burger -->
-                <button id="burger" aria-label="Open menu"
+                <button id="burger" aria-label="Otwórz menu" aria-controls="mobilePanel" aria-expanded="false"
                     class="p-2 -ml-2 rounded-lg hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/30">
-                    <!-- 3 kreski -->
-                    <span class="block h-0.5 w-6 bg-white mb-1"></span>
-                    <span class="block h-0.5 w-6 bg-white mb-1"></span>
-                    <span class="block h-0.5 w-6 bg-white"></span>
+                    <span class="line line-top"></span>
+                    <span class="line line-mid"></span>
+                    <span class="line line-bot"></span>
                 </button>
 
-                <!-- logo center -->
+                <!-- logo -->
                 <a href="#top" aria-label="Strona główna" class="justify-self-center inline-flex items-center">
                     <img src="img/jwierzchowsky.png" alt="j.wierzchowsky"
                         class="h-16 sm:h-20 max-h-20 sm:max-h-24 w-auto select-none pointer-events-none" />
-                    <!-- jeśli masz PNG/JPG, możesz dodać 'invert', by było białe na zdjęciu -->
-                    <!-- class="... invert" -->
                 </a>
 
-                <!-- filler, żeby wycentrować logo (puste miejsce po prawej) -->
+                <!-- filler dla wycentrowania -->
                 <div class="w-10"></div>
             </div>
         </nav>
+    </header>
 
-        <!-- mobile menu (pełnoekranowe) -->
-        <div id="mobileMenu" class="hidden fixed inset-0 z-40 bg-black/80 backdrop-blur">
-            <div class="absolute inset-x-0 top-0 mx-auto max-w-7xl px-6 py-5 flex items-center justify-between">
-                <span class="text-lg font-semibold">Menu</span>
-                <button id="closeMenu"
-                    class="p-2 rounded-lg hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/30">
-                    <span class="block h-0.5 w-6 bg-white rotate-45 translate-y-0.5"></span>
-                    <span class="block h-0.5 w-6 bg-white -rotate-45 -translate-y-0.5"></span>
-                </button>
-            </div>
-            <div class="h-full w-full flex items-center justify-center">
-                <ul class="space-y-6 text-center text-2xl">
-                    <li><a href="#about" class="hover:underline" data-close>O mnie</a></li>
-                    <li><a href="#compare" class="hover:underline" data-close>Przed / Po</a></li>
+    <!-- Dropdown menu + cień (poza headerem) -->
+    <div id="mobileShade"></div>
+    <div id="mobilePanel">
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 py-6">
+            <nav>
+                <ul class="space-y-6 text-left text-2xl">
+                    <li><a href="#edits" class="hover:underline" data-close>Edits</a></li>
                     <li><a href="#social" class="hover:underline" data-close>Social</a></li>
                     <li><a href="#contact" class="hover:underline" data-close>Kontakt</a></li>
                 </ul>
-            </div>
+            </nav>
         </div>
-    </header>
+    </div>
 
-    <!-- HERO z pełnoekranowym sliderem -->
+    <!-- HERO -->
     <section id="top" class="relative h-screen w-full overflow-hidden">
-        <!-- SLIDE 1 -->
         <picture class="hero-slide active">
-            <!-- telefony / pion -->
             <source media="(orientation: portrait)" srcset="img/hero/hero1-vert.jpg">
-            <!-- laptopy / poziom -->
             <source media="(orientation: landscape)" srcset="img/hero/hero1-horiz.jpg">
-            <!-- fallback (np. starsze przeglądarki) -->
             <img src="img/hero/hero1-horiz.jpg" alt="" loading="eager" fetchpriority="high">
         </picture>
-
-        <!-- SLIDE 2 -->
         <picture class="hero-slide">
             <source media="(orientation: portrait)" srcset="img/hero/hero2-vert.jpg">
             <source media="(orientation: landscape)" srcset="img/hero/hero2-horiz.jpg">
             <img src="img/hero/hero2-horiz.jpg" alt="">
         </picture>
-
-        <!-- SLIDE 3 -->
         <picture class="hero-slide">
             <source media="(orientation: portrait)" srcset="img/hero/hero3-vert.jpg">
             <source media="(orientation: landscape)" srcset="img/hero/hero3-horiz.jpg">
@@ -134,7 +231,7 @@
             <source media="(orientation: landscape)" srcset="img/hero/hero4-horiz.jpg">
             <img src="img/hero/hero4-horiz.jpg" alt="">
         </picture>
-        <!-- gradient + podpis mogą zostać tak jak masz -->
+
         <div class="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-black/70 to-transparent">
         </div>
         <div class="absolute inset-x-0 bottom-10 mx-auto max-w-7xl px-6">
@@ -142,8 +239,8 @@
         </div>
     </section>
 
-    <!-- SEKCJA O MNIE (pojawianie przy scrollu) -->
-    <section id="about" class="bg-black">
+    <!-- ABOUT -->
+    <section id="about" class="bg-black anchor-offset">
         <div class="mx-auto max-w-5xl px-6 py-24">
             <h2 class="text-3xl sm:text-4xl font-bold mb-6 reveal opacity-0 translate-y-6 transition-all duration-700">O
                 mnie</h2>
@@ -155,16 +252,15 @@
         </div>
     </section>
 
-    <!-- SEKCJA PRZED/PO z suwakiem -->
-    <section id="edits" class="bg-black">
+    <!-- EDITS -->
+    <section id="edits" class="bg-black anchor-offset">
         <div class="mx-auto max-w-6xl px-6 py-20">
             <h2 class="text-3xl sm:text-4xl font-bold">Edits</h2>
             <p class="text-neutral-300 mt-2">Obczaj to! Chwila obróbki w programie do edycji takich jak Lightroom i
                 zdjęcia mogą nabrać charakteru!</p>
 
-            <!-- główny slider przed/po -->
-            <div id="edit-compare"      
-                class="compare relative overflow-hidden rounded-2xl mt-8 max-w-3xl mx-auto">
+            <div id="edit-compare" class="compare relative overflow-hidden rounded-2xl mt-8 max-w-3xl mx-auto"
+                tabindex="0" aria-label="Suwak porównania przed/po">
                 <img id="after-img" src="img/edits/1-after.jpg" class="absolute inset-0 w-full h-full object-cover"
                     alt="po" />
                 <img id="before-img" src="img/edits/1-before.jpg"
@@ -177,12 +273,12 @@
                 </div>
                 <input type="range" min="0" max="100" value="50" aria-label="Suwak porównania"
                     class="absolute inset-x-0 bottom-3 w-[96%] mx-auto accent-white opacity-0 cursor-ew-resize">
-                <!-- dynamiczny „spacer” dla proporcji -->
                 <div id="ratio-spacer" class="invisible relative" style="padding-top:56.25%"></div>
+                <div id="edit-flash"
+                    class="pointer-events-none absolute inset-0 bg-white/0 transition-opacity duration-200"></div>
             </div>
 
             <div class="mt-5 flex justify-center gap-3 sm:gap-4">
-                <!-- 1 -->
                 <button
                     class="thumb group relative w-24 sm:w-28 md:w-32 aspect-[4/3] rounded-xl overflow-hidden ring-2 ring-transparent data-[active=true]:ring-white/80"
                     data-before="img/edits/1-before.jpg" data-after="img/edits/1-after.jpg" data-active="true"
@@ -192,7 +288,6 @@
                         class="pointer-events-none absolute inset-0 bg-black/0 group-hover:bg-black/10 transition"></span>
                 </button>
 
-                <!-- 2 -->
                 <button
                     class="thumb group relative w-24 sm:w-28 md:w-32 aspect-[4/3] rounded-xl overflow-hidden ring-2 ring-transparent data-[active=true]:ring-white/80"
                     data-before="img/edits/2-before.jpg" data-after="img/edits/2-after.jpg" aria-pressed="false">
@@ -201,7 +296,6 @@
                         class="pointer-events-none absolute inset-0 bg-black/0 group-hover:bg-black/10 transition"></span>
                 </button>
 
-                <!-- 3 -->
                 <button
                     class="thumb group relative w-24 sm:w-28 md:w-32 aspect-[4/3] rounded-xl overflow-hidden ring-2 ring-transparent data-[active=true]:ring-white/80"
                     data-before="img/edits/3-before.jpg" data-after="img/edits/3-after.jpg" aria-pressed="false">
@@ -213,15 +307,14 @@
         </div>
     </section>
 
-    <!-- SOCIAL: placeholder (ostatnie posty IG/FB) -->
-    <section id="social" class="bg-black">
+    <!-- SOCIAL -->
+    <section id="social" class="bg-black anchor-offset">
         <div class="mx-auto max-w-6xl px-6 py-20">
             <h2 class="text-3xl sm:text-4xl font-bold mb-4">Ostatnie posty</h2>
             <p class="text-neutral-400 mb-8">Sprawdzaj Instagram by zobaczyć najlepsze moje prace! Oraz na Facebook,
                 gdzie publikuje albumy z eventów motoryzacyjnych!</p>
 
             <div class="grid sm:grid-cols-2 gap-8">
-                <!-- INSTAGRAM – EMBED PROFILU -->
                 <div class="bg-black rounded-2xl shadow-lg overflow-hidden">
                     <div class="p-2 sm:p-3">
                         <blockquote class="instagram-media"
@@ -230,32 +323,20 @@
                         </blockquote>
                     </div>
                 </div>
-                <!-- FACEBOOK -->
-                <div class="bg-black rounded-2xl shadow-lg overflow-hidden relative">
-                    <div class="p-3">
-                        <div class="fb-page" data-href="https://www.facebook.com/profile.php?id=100087153275058"
-                            data-tabs="timeline" data-width="540" data-adapt-container-width="true"
-                            data-small-header="true" data-hide-cover="false" data-show-facepile="false">
-                        </div>
-                    </div>
 
-                    <!-- Fallback: jeśli SDK nie wczyta feedu -->
-                    <div id="fb-fallback"
-                        class="hidden absolute inset-0 bg-white/95 text-black flex items-center justify-center p-6">
-                        <div class="text-center">
-                            <p class="mb-4">Nie udało się wczytać feedu Facebooka.</p>
-                            <a href="https://www.facebook.com/profile.php?id=100087153275058" target="_blank"
-                                rel="noreferrer" class="inline-block px-4 py-2 rounded-xl bg-black text-white">Otwórz na
-                                Facebooku</a>
-                        </div>
-                    </div>
+                <div class="bg-black rounded-2xl shadow-lg overflow-hidden">
+                    <iframe
+                        src="https://www.facebook.com/plugins/page.php?href=https%3A%2F%2Fwww.facebook.com%2Fprofile.php%3Fid%3D100087153275058&tabs=timeline&width=540&height=700&small_header=true&adapt_container_width=true&hide_cover=false&show_facepile=false"
+                        style="border:none; overflow:hidden; width:100%; height:700px;" scrolling="no" frameborder="0"
+                        allow="encrypted-media; picture-in-picture; web-share" allowfullscreen="true">
+                    </iframe>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- STOPKA -->
-    <footer id="contact" class="bg-black border-t border-white/10">
+    <!-- FOOTER -->
+    <footer id="contact" class="bg-black border-t border-white/10 anchor-offset">
         <div class="mx-auto max-w-6xl px-6 py-12 flex flex-col sm:flex-row items-center justify-between gap-4">
             <p class="text-neutral-400">&copy; <span id="year"></span> j.wierzchowsky. Wszystkie prawa zastrzeżone.</p>
             <div class="flex items-center gap-4 text-neutral-300">
@@ -270,41 +351,66 @@
 
     <!-- SKRYPTY -->
     <script>
-        // navbar mobile
-        const burger = document.getElementById('burger');
-        const mobileMenu = document.getElementById('mobileMenu');
-        const closeMenu = document.getElementById('closeMenu');
-        const closeLinks = () => mobileMenu.classList.add('hidden');
-        burger?.addEventListener('click', () => mobileMenu.classList.remove('hidden'));
-        closeMenu?.addEventListener('click', closeLinks);
-        mobileMenu?.querySelectorAll('[data-close]')?.forEach(a => a.addEventListener('click', closeLinks));
-
-        // hero slider (prosty crossfade)
+        // HERO slider
         (function () {
-            const slides = [...document.querySelectorAll('.hero-slide')];
-            let i = 0;
-            function show(n) {
-                slides.forEach((s, idx) => s.classList.toggle('active', idx === n));
-            }
-            setInterval(() => { i = (i + 1) % slides.length; show(i); }, 4500);
+            const slides = document.querySelectorAll('.hero-slide');
+            let current = 0;
+            const show = i => slides.forEach((s, ix) => s.classList.toggle('active', ix === i));
+            setInterval(() => { current = (current + 1) % slides.length; show(current); }, 5000);
             show(0);
         })();
 
-        // "reveal on scroll" dla sekcji O mnie
+        // Dropdown menu (pod headerem)
+        (function () {
+            const header = document.getElementById('siteHeader');
+            const burger = document.getElementById('burger');
+            const panel = document.getElementById('mobilePanel');
+            const shade = document.getElementById('mobileShade');
+
+            function setHeaderHeightVar() {
+                const h = header.offsetHeight;
+                document.documentElement.style.setProperty('--hdrh', h + 'px');
+            }
+
+            const open = () => {
+                panel.classList.add('open');
+                shade.classList.add('open');
+                document.body.classList.add('overflow-hidden');
+                burger.setAttribute('aria-expanded', 'true');
+                burger.setAttribute('aria-label', 'Zamknij menu');
+            };
+            const close = () => {
+                panel.classList.remove('open');
+                shade.classList.remove('open');
+                document.body.classList.remove('overflow-hidden');
+                burger.setAttribute('aria-expanded', 'false');
+                burger.setAttribute('aria-label', 'Otwórz menu');
+            };
+            const toggle = () => panel.classList.contains('open') ? close() : open();
+
+            burger.addEventListener('click', toggle);
+            shade.addEventListener('click', close);
+            panel.querySelectorAll('[data-close]').forEach(a => a.addEventListener('click', close));
+            window.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+
+            // ustaw poprawny offset pod headerem
+            window.addEventListener('load', setHeaderHeightVar);
+            window.addEventListener('resize', setHeaderHeightVar);
+            setHeaderHeightVar();
+        })();
+
+        // "reveal on scroll" – ABOUT
         (function () {
             const els = document.querySelectorAll('#about .reveal');
             const io = new IntersectionObserver((entries) => {
                 entries.forEach(e => {
-                    if (e.isIntersecting) {
-                        e.target.classList.remove('opacity-0', 'translate-y-6');
-                        io.unobserve(e.target);
-                    }
+                    if (e.isIntersecting) { e.target.classList.remove('opacity-0', 'translate-y-6'); io.unobserve(e.target); }
                 });
             }, { threshold: 0.2 });
             els.forEach(el => io.observe(el));
         })();
-    </script>
-    <script>
+
+        // Edits – suwak + miniatury
         (function () {
             const box = document.getElementById('edit-compare');
             if (!box) return;
@@ -312,129 +418,91 @@
             const beforeImg = document.getElementById('before-img');
             const afterImg = document.getElementById('after-img');
             const spacer = document.getElementById('ratio-spacer');
+            const flash = document.getElementById('edit-flash');
             const range = box.querySelector('input[type="range"]');
             const thumbs = document.querySelectorAll('#edits .thumb');
 
-            let pos = 50; // pozycja suwaka (0–100)
+            let pos = 50;
 
-            // PRELOAD z pewnym fallbackiem na onload (bez decode)
-            const cache = new Map(); // src -> Promise<{w,h}>
+            const cache = new Map();
             function preload(src) {
                 if (cache.has(src)) return cache.get(src);
                 const p = new Promise((resolve) => {
                     const img = new Image();
                     img.onload = () => resolve({ w: img.naturalWidth || 1, h: img.naturalHeight || 1 });
-                    img.onerror = () => resolve({ w: 16, h: 9 }); // bezpieczne domyślne
+                    img.onerror = () => resolve({ w: 16, h: 9 });
                     img.src = src;
                 });
-                cache.set(src, p);
-                return p;
+                cache.set(src, p); return p;
             }
 
-            function setPos(p) {
-                pos = Math.max(0, Math.min(100, p));
-                box.style.setProperty('--pos', pos + '%');
-                if (range) range.value = pos;
-            }
+            function setPos(p) { pos = Math.max(0, Math.min(100, p)); box.style.setProperty('--pos', pos + '%'); if (range) range.value = pos; }
+            function flashChange() { if (!flash) return; flash.style.opacity = '0.08'; setTimeout(() => flash.style.opacity = '0', 160); }
 
             async function switchPair(b, a) {
-                // czekamy, aż OBA obrazy się wczytają (bez migania)
                 const [{ w, h }] = await Promise.all([preload(a), preload(b)]);
-                // ustaw proporcję zanim podmienimy źródła
                 spacer.style.paddingTop = ((h / w) * 100).toFixed(2) + '%';
-                // jednoczesna podmiana obrazów
-                beforeImg.src = b;
-                afterImg.src = a;
-                // zachowaj pozycję linii
-                setPos(pos);
+                beforeImg.src = b; afterImg.src = a; setPos(pos); flashChange();
             }
 
-            // range + drag
-            range?.addEventListener('input', (e) => setPos(+e.target.value));
-            const move = (x) => {
-                const r = box.getBoundingClientRect();
-                setPos(((x - r.left) / r.width) * 100);
-            };
-            box.addEventListener('pointerdown', (e) => { box.setPointerCapture(e.pointerId); move(e.clientX); });
-            box.addEventListener('pointermove', (e) => { if (e.buttons) move(e.clientX); });
+            range?.addEventListener('input', e => setPos(+e.target.value));
+            const move = x => { const r = box.getBoundingClientRect(); setPos(((x - r.left) / r.width) * 100); };
+            box.addEventListener('pointerdown', e => { box.setPointerCapture(e.pointerId); move(e.clientX); });
+            box.addEventListener('pointermove', e => { if (e.buttons) move(e.clientX); });
 
-            // miniatury
+            box.addEventListener('keydown', e => {
+                if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+                    e.preventDefault();
+                    const step = e.shiftKey ? 10 : 2;
+                    setPos(pos + (e.key === 'ArrowRight' ? step : -step));
+                }
+            });
+
             thumbs.forEach(btn => {
                 btn.addEventListener('click', () => {
                     thumbs.forEach(t => { t.dataset.active = 'false'; t.setAttribute('aria-pressed', 'false'); });
-                    btn.dataset.active = 'true';
-                    btn.setAttribute('aria-pressed', 'true');
+                    btn.dataset.active = 'true'; btn.setAttribute('aria-pressed', 'true');
                     switchPair(btn.dataset.before, btn.dataset.after);
                 });
             });
 
-            // preload wszystkich par + start
             thumbs.forEach(t => { preload(t.dataset.after); preload(t.dataset.before); });
             const active = document.querySelector('#edits .thumb[data-active="true"]') || thumbs[0];
             if (active) switchPair(active.dataset.before, active.dataset.after);
             setPos(50);
         })();
-    </script>
 
-    <script>
         // rok w stopce
         document.getElementById('year').textContent = new Date().getFullYear();
-    </script>
-    </script>
-    <script>
-        // płynne tło paska – 0 na górze, 1 przy sekcji #about
+
+        // płynne tło paska – 0 na górze, 1 przy #about
         (function () {
             const header = document.getElementById('siteHeader');
             const about = document.getElementById('about');
-
             const headerH = () => header.offsetHeight;
             const aboutTop = () => about.getBoundingClientRect().top + window.scrollY;
-
-            let limit = 1; // punkt, w którym tło ma 100% krycia
-
+            let limit = 1;
             function recalc() {
-                // tło osiąga 1.0 dokładnie gdy górna krawędź #about dochodzi pod pasek
                 limit = Math.max(1, aboutTop() - headerH());
+                const h = headerH();
+                document.documentElement.style.setProperty('--hdrh', h + 'px'); // sync dla dropdownu
                 onScroll();
             }
             function onScroll() {
                 const y = window.scrollY || 0;
-                // liniowo od 0 do 1 w zakresie [0, limit]
                 const p = Math.min(1, Math.max(0, y / limit));
                 header.style.setProperty('--nav-alpha', p.toFixed(3));
-                header.classList.toggle('shadow-lg', p > 0.05); // delikatny cień gdy nie jest 100% przezroczysty
+                header.classList.toggle('shadow-lg', p > 0.05);
             }
-
             window.addEventListener('scroll', onScroll, { passive: true });
             window.addEventListener('resize', recalc);
             window.addEventListener('load', recalc);
             recalc();
         })();
     </script>
+
     <!-- Instagram embed -->
     <script async src="https://www.instagram.com/embed.js"></script>
-
-    <!-- Facebook SDK + deterministyczne init -->
-    <div id="fb-root"></div>
-    <script>
-        window.fbAsyncInit = function () {
-            FB.init({ xfbml: true, version: 'v19.0' });
-            // Spróbuj wymusić render po inicjalizacji
-            FB.XFBML.parse();
-        };
-    </script>
-    <script async defer crossorigin="anonymous" src="https://connect.facebook.net/pl_PL/sdk.js"></script>
-
-    <script>
-        // Fallback: jeśli po 3 s nie ma iframa FB, pokaż przycisk do strony
-        window.addEventListener('load', () => {
-            setTimeout(() => {
-                const hasIframe = document.querySelector('.fb-page iframe');
-                document.getElementById('fb-fallback')?.classList.toggle('hidden', !!hasIframe);
-                console.log('FB loaded:', typeof FB !== 'undefined', 'iframe:', !!hasIframe);
-            }, 3000);
-        });
-    </script>
 </body>
 
 </html>
