@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sesje zdjęciowe — j.wierzchowsky</title>
+
+  <!-- Główny styl projektu -->
+  <link rel="stylesheet" href="./css/style.css" />
+  <!-- Styl tylko dla tej podstrony -->
+  <link rel="stylesheet" href="./css/sessions.css" />
+</head>
+<body class="bg-black text-white selection:bg-white selection:text-black">
+
+  <!-- HEADER (include) -->
+  <div data-include="./partials/header.html"></div>
+
+  <!-- Rozmyte tło strony -->
+  <div class="page-bg" aria-hidden="true"></div>
+
+  <main class="mx-auto max-w-7xl px-4 sm:px-6 pt-28 pb-24 relative">
+    <h1 class="text-3xl sm:text-4xl font-bold mb-8">Sesje zdjęciowe</h1>
+
+    <!-- GRID kafelków -->
+    <section class="sessions-grid">
+      <a class="session-card" href="#motoryzacja" style="--img:url('./img/sessions/automotive.jpg')">
+        <div class="card-inner"><h2>Motoryzacja</h2></div>
+      </a>
+      <a class="session-card" href="#portrety" style="--img:url('./img/sessions/portraits.jpg')">
+        <div class="card-inner"><h2>Portrety</h2></div>
+      </a>
+      <a class="session-card" href="#zwierzeta" style="--img:url('./img/sessions/animal.jpg')">
+        <div class="card-inner"><h2>Zwierzęta</h2></div>
+      </a>
+      <a class="session-card" href="#wydarzenia" style="--img:url('./img/sessions/events.jpg')">
+        <div class="card-inner"><h2>Wydarzenia</h2></div>
+      </a>
+      <a class="session-card" href="#grafiki" style="--img:url('./img/sessions/graphics.jpg')">
+        <div class="card-inner"><h2>Grafiki i plakaty</h2></div>
+      </a>
+    </section>
+  </main>
+
+  <!-- FOOTER (include) -->
+  <div data-include="./partials/footer.html"></div>
+
+  <!-- Includer + wspólne skrypty -->
+  <script src="./js/include.js"></script>
+  <script src="./js/common.js"></script>
+  <script src="./js/sessions.js"></script>
+
+  <!-- (opcjonalnie) Instagram embed -->
+  <script async src="https://www.instagram.com/embed.js"></script>
+</body>
+</html>

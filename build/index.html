@@ -1,508 +1,387 @@
 <!doctype html>
 <html lang="pl">
-
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>j.wierzchowsky — portfolio</title>
-    <link rel="stylesheet" href="css/style.css" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>j.wierzchowsky — portfolio</title>
+  <link rel="stylesheet" href="css/style.css" />
 
-    <!-- Preloady do Edits -->
-    <link rel="preload" as="image" href="img/edits/1-after.jpg">
-    <link rel="preload" as="image" href="img/edits/1-before.jpg">
-    <link rel="preload" as="image" href="img/edits/2-after.jpg">
-    <link rel="preload" as="image" href="img/edits/2-before.jpg">
-    <link rel="preload" as="image" href="img/edits/3-after.jpg">
-    <link rel="preload" as="image" href="img/edits/3-before.jpg">
+  <!-- Preloady do Edits -->
+  <link rel="preload" as="image" href="img/edits/1-after.jpg">
+  <link rel="preload" as="image" href="img/edits/1-before.jpg">
+  <link rel="preload" as="image" href="img/edits/2-after.jpg">
+  <link rel="preload" as="image" href="img/edits/2-before.jpg">
+  <link rel="preload" as="image" href="img/edits/3-after.jpg">
+  <link rel="preload" as="image" href="img/edits/3-before.jpg">
 
-    <style>
-        html {
-            scroll-behavior: smooth;
-        }
+  <style>
+    html{scroll-behavior:smooth}
+    .anchor-offset{scroll-margin-top:80px}
 
-        .anchor-offset {
-            scroll-margin-top: 80px;
-        }
+    /* HERO crossfade */
+    .hero-slide{position:absolute;inset:0;opacity:0;transition:opacity .8s ease}
+    .hero-slide.active{opacity:1}
+    .hero-slide>img{width:100%;height:100%;object-fit:cover;object-position:center}
 
-        /* HERO crossfade */
-        .hero-slide {
-            position: absolute;
-            inset: 0;
-            opacity: 0;
-            transition: opacity .8s ease
-        }
+    /* Navbar szkło */
+    .header-glass{
+      background: rgba(0,0,0,var(--nav-alpha,0));
+      backdrop-filter: blur(8px) saturate(160%);
+      -webkit-backdrop-filter: blur(8px) saturate(160%);
+      border-bottom: 1px solid rgba(255,255,255,calc(var(--nav-alpha,0)*.2));
+      transition: background-color .2s ease, border-color .2s ease;
+    }
 
-        .hero-slide.active {
-            opacity: 1
-        }
+    /* Before/After */
+    .compare{--pos:50%}
+    .compare .mask{
+      clip-path:polygon(0 0,var(--pos) 0,var(--pos) 100%,0 100%);
+      transition:clip-path .12s ease;
+      will-change:clip-path;
+    }
+    .compare .handle{left:calc(var(--pos));transform:translateX(-50%);transition:left .12s ease}
 
-        .hero-slide>img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            object-position: center
-        }
+    /* === DROPDOWN MENU (pod headerem) === */
+    :root{ --hdrh:64px; } /* aktualizowane w JS */
 
-        /* Navbar szkło */
-        .header-glass {
-            background: rgba(0, 0, 0, var(--nav-alpha, 0));
-            backdrop-filter: blur(8px) saturate(160%);
-            -webkit-backdrop-filter: blur(8px) saturate(160%);
-            border-bottom: 1px solid rgba(255, 255, 255, calc(var(--nav-alpha, 0) * .2));
-            transition: background-color .2s ease, border-color .2s ease;
-        }
+    #mobileShade{
+      position:fixed; left:0; right:0; top:var(--hdrh); bottom:0; z-index:60;
+      background:rgba(0,0,0,.6); opacity:0; pointer-events:none;
+      transition:opacity .35s ease; backdrop-filter:blur(2px); -webkit-backdrop-filter:blur(2px);
+    }
+    #mobileShade.open{opacity:1; pointer-events:auto}
 
-        /* Before/After */
-        .compare {
-            --pos: 50%
-        }
+    #mobilePanel{
+      position:fixed; left:0; right:0; top:var(--hdrh); z-index:61; background:#000;
+      border-bottom:1px solid rgba(255,255,255,.1);
+      max-height:0; opacity:0; overflow:hidden; transform:translateY(-8px);
+      transition: transform .45s cubic-bezier(.22,1,.36,1),
+                  max-height .45s cubic-bezier(.22,1,.36,1),
+                  opacity .35s ease;
+    }
+    #mobilePanel.open{max-height:85vh; opacity:1; transform:translateY(0)}
 
-        .compare .mask {
-            clip-path: polygon(0 0, var(--pos) 0, var(--pos) 100%, 0 100%);
-            transition: clip-path .12s ease;
-            will-change: clip-path;
-        }
-
-        .compare .handle {
-            left: calc(var(--pos));
-            transform: translateX(-50%);
-            transition: left .12s ease
-        }
-
-        /* === DROPDOWN MENU (pod headerem) === */
-        :root {
-            --hdrh: 64px;
-        }
-
-        /* nadpisywane w JS realną wysokością paska */
-
-        /* cień/zakrycie strony – zaczyna się POD headerem */
-        #mobileShade {
-            position: fixed;
-            left: 0;
-            right: 0;
-            top: var(--hdrh);
-            bottom: 0;
-            z-index: 60;
-            background: rgba(0, 0, 0, .6);
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity .2s ease;
-            backdrop-filter: blur(2px);
-            -webkit-backdrop-filter: blur(2px);
-        }
-
-        #mobileShade.open {
-            opacity: 1;
-            pointer-events: auto;
-        }
-
-        /* panel menu – pełna szerokość, rozwijany w dół */
-        #mobilePanel {
-            position: fixed;
-            left: 0;
-            right: 0;
-            top: var(--hdrh);
-            z-index: 61;
-            background: #000;
-            border-bottom: 1px solid rgba(255, 255, 255, .1);
-            max-height: 0;
-            opacity: 0;
-            overflow: hidden;
-            transform: translateY(-10px);
-            transition:
-                transform .45s cubic-bezier(.22, 1, .36, 1),
-                max-height .45s cubic-bezier(.22, 1, .36, 1),
-                opacity .35s ease;
-        }
-
-        #mobilePanel.open {
-            max-height: 85vh;
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        /* Burger → X */
-        #burger .line {
-            display: block;
-            width: 24px;
-            /* ~ w-6 */
-            height: 2px;
-            /* ~ h-0.5 */
-            margin-bottom: 4px;
-            /* ~ mb-1 */
-            background: #fff;
-            transition: transform .45s cubic-bezier(.22, 1, .36, 1),
-                opacity .35s ease;
-            transform-origin: center;
-        }
-
-        #burger .line:last-child {
-            margin-bottom: 0;
-        }
-
-        /* Odległość dosunięcia przy animacji X */
-        #burger {
-            --x-shift: 7px;
-        }
-
-        /* Stan otwarty: burger → X */
-        #burger[aria-expanded="true"] .line-top {
-            transform: translateY(var(--x-shift)) rotate(45deg);
-        }
-
-        #burger[aria-expanded="true"] .line-mid {
-            opacity: 0;
-        }
-
-        #burger[aria-expanded="true"] .line-bot {
-            transform: translateY(calc(var(--x-shift) * -1)) rotate(-45deg);
-        }
-
-        /* Delikatny „slide down” dropdownu */
-        #mobilePanel {
-            transform: translateY(-8px);
-        }
-
-        #mobilePanel.open {
-            transform: translateY(0);
-        }
-    </style>
+    /* Burger → X */
+    #burger .line{
+      display:block; width:24px; height:2px; margin-bottom:4px; background:#fff;
+      transition:transform .45s cubic-bezier(.22,1,.36,1), opacity .35s ease;
+      transform-origin:center;
+    }
+    #burger .line:last-child{margin-bottom:0}
+    #burger{ --x-shift:7px; }
+    #burger[aria-expanded="true"] .line-top{ transform:translateY(var(--x-shift)) rotate(45deg) }
+    #burger[aria-expanded="true"] .line-mid{ opacity:0 }
+    #burger[aria-expanded="true"] .line-bot{ transform:translateY(calc(var(--x-shift)*-1)) rotate(-45deg) }
+  </style>
 </head>
 
 <body class="bg-black text-white selection:bg-white selection:text-black">
-    <!-- NAVBAR -->
-    <header id="siteHeader" class="fixed inset-x-0 top-0 z-50 header-glass" style="--nav-alpha:0">
-        <nav class="mx-auto max-w-7xl px-4 sm:px-6">
-            <div class="flex items-center justify-between py-4">
-                <!-- burger -->
-                <button id="burger" aria-label="Otwórz menu" aria-controls="mobilePanel" aria-expanded="false"
-                    class="p-2 -ml-2 rounded-lg hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/30">
-                    <span class="line line-top"></span>
-                    <span class="line line-mid"></span>
-                    <span class="line line-bot"></span>
-                </button>
+  <!-- NAVBAR -->
+  <header id="siteHeader" class="fixed inset-x-0 top-0 z-50 header-glass" style="--nav-alpha:0">
+    <nav class="mx-auto max-w-7xl px-4 sm:px-6">
+      <div class="flex items-center justify-between py-4">
+        <!-- burger -->
+        <button id="burger" aria-label="Otwórz menu" aria-controls="mobilePanel" aria-expanded="false"
+                class="p-2 -ml-2 rounded-lg hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/30">
+          <span class="line line-top"></span>
+          <span class="line line-mid"></span>
+          <span class="line line-bot"></span>
+        </button>
 
-                <!-- logo -->
-                <a href="#top" aria-label="Strona główna" class="justify-self-center inline-flex items-center">
-                    <img src="img/jwierzchowsky.png" alt="j.wierzchowsky"
-                        class="h-16 sm:h-20 max-h-20 sm:max-h-24 w-auto select-none pointer-events-none" />
-                </a>
+        <!-- logo -->
+        <a href="#top" aria-label="Strona główna" class="justify-self-center inline-flex items-center">
+          <img src="img/jwierzchowsky.png" alt="j.wierzchowsky"
+               class="h-16 sm:h-20 max-h-20 sm:max-h-24 w-auto select-none pointer-events-none" />
+        </a>
 
-                <!-- filler dla wycentrowania -->
-                <div class="w-10"></div>
-            </div>
-        </nav>
-    </header>
+        <!-- filler dla wycentrowania -->
+        <div class="w-10"></div>
+      </div>
+    </nav>
+  </header>
 
-    <!-- Dropdown menu + cień (poza headerem) -->
-    <div id="mobileShade"></div>
-    <div id="mobilePanel">
-        <div class="mx-auto max-w-7xl px-4 sm:px-6 py-6">
-            <nav>
-                <ul class="space-y-6 text-left text-2xl">
-                    <li><a href="#edits" class="hover:underline" data-close>Edits</a></li>
-                    <li><a href="#social" class="hover:underline" data-close>Social</a></li>
-                    <li><a href="#contact" class="hover:underline" data-close>Kontakt</a></li>
-                </ul>
-            </nav>
-        </div>
+  <!-- Dropdown menu + cień -->
+  <div id="mobileShade"></div>
+  <div id="mobilePanel">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 py-6">
+      <nav>
+        <ul class="space-y-6 text-left text-2xl">
+          <li><a href="sessions.html" class="hover:underline" data-close>Sesje zdjęciowe</a></li>
+          <li><a href="#edits"   class="hover:underline" data-close>Edits</a></li>
+          <li><a href="#social"  class="hover:underline" data-close>Social</a></li>
+          <li><a href="#contact" class="hover:underline" data-close>Kontakt</a></li>
+        </ul>
+      </nav>
     </div>
+  </div>
 
-    <!-- HERO -->
-    <section id="top" class="relative h-screen w-full overflow-hidden">
-        <picture class="hero-slide active">
-            <source media="(orientation: portrait)" srcset="img/hero/hero1-vert.jpg">
-            <source media="(orientation: landscape)" srcset="img/hero/hero1-horiz.jpg">
-            <img src="img/hero/hero1-horiz.jpg" alt="" loading="eager" fetchpriority="high">
-        </picture>
-        <picture class="hero-slide">
-            <source media="(orientation: portrait)" srcset="img/hero/hero2-vert.jpg">
-            <source media="(orientation: landscape)" srcset="img/hero/hero2-horiz.jpg">
-            <img src="img/hero/hero2-horiz.jpg" alt="">
-        </picture>
-        <picture class="hero-slide">
-            <source media="(orientation: portrait)" srcset="img/hero/hero3-vert.jpg">
-            <source media="(orientation: landscape)" srcset="img/hero/hero3-horiz.jpg">
-            <img src="img/hero/hero3-horiz.jpg" alt="">
-        </picture>
-        <picture class="hero-slide">
-            <source media="(orientation: portrait)" srcset="img/hero/hero4-vert.jpg">
-            <source media="(orientation: landscape)" srcset="img/hero/hero4-horiz.jpg">
-            <img src="img/hero/hero4-horiz.jpg" alt="">
-        </picture>
+  <!-- HERO -->
+  <section id="top" class="relative h-screen w-full overflow-hidden">
+    <picture class="hero-slide active">
+      <source media="(orientation: portrait)"   srcset="img/hero/hero1-vert.jpg">
+      <source media="(orientation: landscape)" srcset="img/hero/hero1-horiz.jpg">
+      <img src="img/hero/hero1-horiz.jpg" alt="" loading="eager" fetchpriority="high">
+    </picture>
+    <picture class="hero-slide">
+      <source media="(orientation: portrait)"   srcset="img/hero/hero2-vert.jpg">
+      <source media="(orientation: landscape)" srcset="img/hero/hero2-horiz.jpg">
+      <img src="img/hero/hero2-horiz.jpg" alt="">
+    </picture>
+    <picture class="hero-slide">
+      <source media="(orientation: portrait)"   srcset="img/hero/hero3-vert.jpg">
+      <source media="(orientation: landscape)" srcset="img/hero/hero3-horiz.jpg">
+      <img src="img/hero/hero3-horiz.jpg" alt="">
+    </picture>
+    <picture class="hero-slide">
+      <source media="(orientation: portrait)"   srcset="img/hero/hero4-vert.jpg">
+      <source media="(orientation: landscape)" srcset="img/hero/hero4-horiz.jpg">
+      <img src="img/hero/hero4-horiz.jpg" alt="">
+    </picture>
 
-        <div class="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-black/70 to-transparent">
+    <div class="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-black/70 to-transparent"></div>
+    <div class="absolute inset-x-0 bottom-10 mx-auto max-w-7xl px-6">
+      <h1 class="text-3xl sm:text-5xl font-extrabold drop-shadow-xl">Jestem fotografem</h1>
+    </div>
+  </section>
+
+  <!-- ABOUT -->
+  <section id="about" class="bg-black anchor-offset">
+    <div class="mx-auto max-w-5xl px-6 py-24">
+      <h2 class="text-3xl sm:text-4xl font-bold mb-6 reveal opacity-0 translate-y-6 transition-all duration-700">O mnie</h2>
+      <p class="text-neutral-300 leading-relaxed reveal opacity-0 translate-y-6 transition-all duration-700 [transition-delay:150ms]">
+        Cześć! Nazywam się Jan Wierzchowski. Specjalizuję się w fotografii motoryzacyjnej i miejskiej.
+        Lubię mocny kontrast, czyste linie i naturalne kolory. Pracuję w Warszawie i okolicach.
+      </p>
+    </div>
+  </section>
+
+  <!-- EDITS -->
+  <section id="edits" class="bg-black anchor-offset">
+    <div class="mx-auto max-w-6xl px-6 py-20">
+      <h2 class="text-3xl sm:text-4xl font-bold">Edits</h2>
+      <p class="text-neutral-300 mt-2">Obczaj to! Chwila obróbki w programie do edycji takich jak Lightroom i zdjęcia mogą nabrać charakteru!</p>
+
+      <div id="edit-compare" class="compare relative overflow-hidden rounded-2xl mt-8 max-w-3xl mx-auto" tabindex="0" aria-label="Suwak porównania przed/po">
+        <img id="after-img"  src="img/edits/1-after.jpg"  class="absolute inset-0 w-full h-full object-cover" alt="po" />
+        <img id="before-img" src="img/edits/1-before.jpg" class="mask absolute inset-0 w-full h-full object-cover" alt="przed" />
+        <div class="handle absolute inset-y-0">
+          <div class="h-full w-0.5 bg-white/80"></div>
+          <div class="absolute top-1/2 -translate-y-1/2 -left-3"><div class="w-6 h-6 rounded-full bg-white/90 shadow"></div></div>
         </div>
-        <div class="absolute inset-x-0 bottom-10 mx-auto max-w-7xl px-6">
-            <h1 class="text-3xl sm:text-5xl font-extrabold drop-shadow-xl">Jestem fotografem</h1>
+        <input type="range" min="0" max="100" value="50" aria-label="Suwak porównania"
+               class="absolute inset-x-0 bottom-3 w-[96%] mx-auto accent-white opacity-0 cursor-ew-resize">
+        <div id="ratio-spacer" class="invisible relative" style="padding-top:56.25%"></div>
+        <div id="edit-flash" class="pointer-events-none absolute inset-0 bg-white/0 transition-opacity duration-200"></div>
+      </div>
+
+      <div class="mt-5 flex justify-center gap-3 sm:gap-4">
+        <button class="thumb group relative w-24 sm:w-28 md:w-32 aspect-[4/3] rounded-xl overflow-hidden ring-2 ring-transparent data-[active=true]:ring-white/80"
+                data-before="img/edits/1-before.jpg" data-after="img/edits/1-after.jpg" data-active="true" aria-pressed="true">
+          <img src="img/edits/1-after.jpg" class="w-full h-full object-cover" alt="Ujęcie 1" />
+          <span class="pointer-events-none absolute inset-0 bg-black/0 group-hover:bg-black/10 transition"></span>
+        </button>
+
+        <button class="thumb group relative w-24 sm:w-28 md:w-32 aspect-[4/3] rounded-xl overflow-hidden ring-2 ring-transparent data-[active=true]:ring-white/80"
+                data-before="img/edits/2-before.jpg" data-after="img/edits/2-after.jpg" aria-pressed="false">
+          <img src="img/edits/2-after.jpg" class="w-full h-full object-cover" alt="Ujęcie 2" />
+          <span class="pointer-events-none absolute inset-0 bg-black/0 group-hover:bg-black/10 transition"></span>
+        </button>
+
+        <button class="thumb group relative w-24 sm:w-28 md:w-32 aspect-[4/3] rounded-xl overflow-hidden ring-2 ring-transparent data-[active=true]:ring-white/80"
+                data-before="img/edits/3-before.jpg" data-after="img/edits/3-after.jpg" aria-pressed="false">
+          <img src="img/edits/3-after.jpg" class="w-full h-full object-cover" alt="Ujęcie 3" />
+          <span class="pointer-events-none absolute inset-0 bg-black/0 group-hover:bg-black/10 transition"></span>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- SOCIAL -->
+  <section id="social" class="bg-black anchor-offset">
+    <div class="mx-auto max-w-6xl px-6 py-20">
+      <h2 class="text-3xl sm:text-4xl font-bold mb-4">Ostatnie posty</h2>
+      <p class="text-neutral-400 mb-8">Sprawdzaj Instagram by zobaczyć najlepsze moje prace! Oraz na Facebook, gdzie publikuje albumy z eventów motoryzacyjnych!</p>
+
+      <div class="grid sm:grid-cols-2 gap-8">
+        <div class="bg-black rounded-2xl shadow-lg overflow-hidden">
+          <div class="p-2 sm:p-3">
+            <blockquote class="instagram-media" data-instgrm-permalink="https://www.instagram.com/j.wierzchowsky/" data-instgrm-version="14"
+                        style="background:#000;border:0;margin:0;max-width:540px;width:100%;"></blockquote>
+          </div>
         </div>
-    </section>
 
-    <!-- ABOUT -->
-    <section id="about" class="bg-black anchor-offset">
-        <div class="mx-auto max-w-5xl px-6 py-24">
-            <h2 class="text-3xl sm:text-4xl font-bold mb-6 reveal opacity-0 translate-y-6 transition-all duration-700">O
-                mnie</h2>
-            <p
-                class="text-neutral-300 leading-relaxed reveal opacity-0 translate-y-6 transition-all duration-700 [transition-delay:150ms]">
-                Cześć! Nazywam się Jan Wierzchowski. Specjalizuję się w fotografii motoryzacyjnej i miejskiej.
-                Lubię mocny kontrast, czyste linie i naturalne kolory. Pracuję w Warszawie i okolicach.
-            </p>
+        <div class="bg-black rounded-2xl shadow-lg overflow-hidden">
+          <iframe
+            src="https://www.facebook.com/plugins/page.php?href=https%3A%2F%2Fwww.facebook.com%2Fprofile.php%3Fid%3D100087153275058&tabs=timeline&width=540&height=700&small_header=true&adapt_container_width=true&hide_cover=false&show_facepile=false"
+            style="border:none; overflow:hidden; width:100%; height:700px;" scrolling="no" frameborder="0"
+            allow="encrypted-media; picture-in-picture; web-share" allowfullscreen="true"></iframe>
         </div>
-    </section>
+      </div>
+    </div>
+  </section>
 
-    <!-- EDITS -->
-    <section id="edits" class="bg-black anchor-offset">
-        <div class="mx-auto max-w-6xl px-6 py-20">
-            <h2 class="text-3xl sm:text-4xl font-bold">Edits</h2>
-            <p class="text-neutral-300 mt-2">Obczaj to! Chwila obróbki w programie do edycji takich jak Lightroom i
-                zdjęcia mogą nabrać charakteru!</p>
+  <!-- FOOTER -->
+  <footer id="contact" class="bg-black border-t border-white/10 anchor-offset">
+    <div class="mx-auto max-w-6xl px-6 py-12 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <p class="text-neutral-400">&copy; <span id="year"></span> j.wierzchowsky. Wszystkie prawa zastrzeżone.</p>
+      <div class="flex items-center gap-4 text-neutral-300">
+        <a href="mailto:j.wierzchowsky@gmail.com" class="hover:underline">Email</a>
+        <a href="https://www.instagram.com/j.wierzchowsky/" target="_blank" rel="noreferrer" class="hover:underline">Instagram</a>
+        <a href="https://www.facebook.com/profile.php?id=100087153275058" target="_blank" rel="noreferrer" class="hover:underline">Facebook</a>
+      </div>
+    </div>
+  </footer>
 
-            <div id="edit-compare" class="compare relative overflow-hidden rounded-2xl mt-8 max-w-3xl mx-auto"
-                tabindex="0" aria-label="Suwak porównania przed/po">
-                <img id="after-img" src="img/edits/1-after.jpg" class="absolute inset-0 w-full h-full object-cover"
-                    alt="po" />
-                <img id="before-img" src="img/edits/1-before.jpg"
-                    class="mask absolute inset-0 w-full h-full object-cover" alt="przed" />
-                <div class="handle absolute inset-y-0">
-                    <div class="h-full w-0.5 bg-white/80"></div>
-                    <div class="absolute top-1/2 -translate-y-1/2 -left-3">
-                        <div class="w-6 h-6 rounded-full bg-white/90 shadow"></div>
-                    </div>
-                </div>
-                <input type="range" min="0" max="100" value="50" aria-label="Suwak porównania"
-                    class="absolute inset-x-0 bottom-3 w-[96%] mx-auto accent-white opacity-0 cursor-ew-resize">
-                <div id="ratio-spacer" class="invisible relative" style="padding-top:56.25%"></div>
-                <div id="edit-flash"
-                    class="pointer-events-none absolute inset-0 bg-white/0 transition-opacity duration-200"></div>
-            </div>
+  <!-- SKRYPTY -->
+  <script>
+    // HERO slider
+    (function(){
+      const slides = document.querySelectorAll('.hero-slide');
+      let current = 0;
+      const show = i => slides.forEach((s, ix) => s.classList.toggle('active', ix === i));
+      setInterval(() => { current = (current + 1) % slides.length; show(current); }, 5000);
+      show(0);
+    })();
 
-            <div class="mt-5 flex justify-center gap-3 sm:gap-4">
-                <button
-                    class="thumb group relative w-24 sm:w-28 md:w-32 aspect-[4/3] rounded-xl overflow-hidden ring-2 ring-transparent data-[active=true]:ring-white/80"
-                    data-before="img/edits/1-before.jpg" data-after="img/edits/1-after.jpg" data-active="true"
-                    aria-pressed="true">
-                    <img src="img/edits/1-after.jpg" class="w-full h-full object-cover" alt="Ujęcie 1" />
-                    <span
-                        class="pointer-events-none absolute inset-0 bg-black/0 group-hover:bg-black/10 transition"></span>
-                </button>
+    // Dropdown menu (pod headerem)
+    (function(){
+      const header = document.getElementById('siteHeader');
+      const burger  = document.getElementById('burger');
+      const panel   = document.getElementById('mobilePanel');
+      const shade   = document.getElementById('mobileShade');
 
-                <button
-                    class="thumb group relative w-24 sm:w-28 md:w-32 aspect-[4/3] rounded-xl overflow-hidden ring-2 ring-transparent data-[active=true]:ring-white/80"
-                    data-before="img/edits/2-before.jpg" data-after="img/edits/2-after.jpg" aria-pressed="false">
-                    <img src="img/edits/2-after.jpg" class="w-full h-full object-cover" alt="Ujęcie 2" />
-                    <span
-                        class="pointer-events-none absolute inset-0 bg-black/0 group-hover:bg-black/10 transition"></span>
-                </button>
+      function setHeaderHeightVar(){
+        document.documentElement.style.setProperty('--hdrh', header.offsetHeight + 'px');
+      }
 
-                <button
-                    class="thumb group relative w-24 sm:w-28 md:w-32 aspect-[4/3] rounded-xl overflow-hidden ring-2 ring-transparent data-[active=true]:ring-white/80"
-                    data-before="img/edits/3-before.jpg" data-after="img/edits/3-after.jpg" aria-pressed="false">
-                    <img src="img/edits/3-after.jpg" class="w-full h-full object-cover" alt="Ujęcie 3" />
-                    <span
-                        class="pointer-events-none absolute inset-0 bg-black/0 group-hover:bg-black/10 transition"></span>
-                </button>
-            </div>
-        </div>
-    </section>
+      const open = () => {
+        panel.classList.add('open');
+        shade.classList.add('open');
+        document.body.classList.add('overflow-hidden');
+        burger.setAttribute('aria-expanded','true');
+        burger.setAttribute('aria-label','Zamknij menu');
+      };
+      const close = () => {
+        panel.classList.remove('open');
+        shade.classList.remove('open');
+        document.body.classList.remove('overflow-hidden');
+        burger.setAttribute('aria-expanded','false');
+        burger.setAttribute('aria-label','Otwórz menu');
+      };
+      const toggle = () => panel.classList.contains('open') ? close() : open();
 
-    <!-- SOCIAL -->
-    <section id="social" class="bg-black anchor-offset">
-        <div class="mx-auto max-w-6xl px-6 py-20">
-            <h2 class="text-3xl sm:text-4xl font-bold mb-4">Ostatnie posty</h2>
-            <p class="text-neutral-400 mb-8">Sprawdzaj Instagram by zobaczyć najlepsze moje prace! Oraz na Facebook,
-                gdzie publikuje albumy z eventów motoryzacyjnych!</p>
+      burger.addEventListener('click', toggle);
+      shade.addEventListener('click', close);
+      panel.querySelectorAll('[data-close]').forEach(a => a.addEventListener('click', close));
+      window.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
 
-            <div class="grid sm:grid-cols-2 gap-8">
-                <div class="bg-black rounded-2xl shadow-lg overflow-hidden">
-                    <div class="p-2 sm:p-3">
-                        <blockquote class="instagram-media"
-                            data-instgrm-permalink="https://www.instagram.com/j.wierzchowsky/" data-instgrm-version="14"
-                            style="background:#000; border:0; margin:0; max-width:540px; width:100%;">
-                        </blockquote>
-                    </div>
-                </div>
+      window.addEventListener('load', setHeaderHeightVar);
+      window.addEventListener('resize', setHeaderHeightVar);
+      setHeaderHeightVar();
+    })();
 
-                <div class="bg-black rounded-2xl shadow-lg overflow-hidden">
-                    <iframe
-                        src="https://www.facebook.com/plugins/page.php?href=https%3A%2F%2Fwww.facebook.com%2Fprofile.php%3Fid%3D100087153275058&tabs=timeline&width=540&height=700&small_header=true&adapt_container_width=true&hide_cover=false&show_facepile=false"
-                        style="border:none; overflow:hidden; width:100%; height:700px;" scrolling="no" frameborder="0"
-                        allow="encrypted-media; picture-in-picture; web-share" allowfullscreen="true">
-                    </iframe>
-                </div>
-            </div>
-        </div>
-    </section>
+    // "reveal on scroll" – ABOUT
+    (function(){
+      const els = document.querySelectorAll('#about .reveal');
+      const io = new IntersectionObserver((entries)=>{
+        entries.forEach(e=>{
+          if(e.isIntersecting){ e.target.classList.remove('opacity-0','translate-y-6'); io.unobserve(e.target); }
+        });
+      }, {threshold:0.2});
+      els.forEach(el=>io.observe(el));
+    })();
 
-    <!-- FOOTER -->
-    <footer id="contact" class="bg-black border-t border-white/10 anchor-offset">
-        <div class="mx-auto max-w-6xl px-6 py-12 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p class="text-neutral-400">&copy; <span id="year"></span> j.wierzchowsky. Wszystkie prawa zastrzeżone.</p>
-            <div class="flex items-center gap-4 text-neutral-300">
-                <a href="mailto:j.wierzchowsky@gmail.com" class="hover:underline">Email</a>
-                <a href="https://www.instagram.com/j.wierzchowsky/" target="_blank" rel="noreferrer"
-                    class="hover:underline">Instagram</a>
-                <a href="https://www.facebook.com/profile.php?id=100087153275058" target="_blank" rel="noreferrer"
-                    class="hover:underline">Facebook</a>
-            </div>
-        </div>
-    </footer>
+    // Edits – suwak + miniatury
+    (function(){
+      const box = document.getElementById('edit-compare');
+      if(!box) return;
 
-    <!-- SKRYPTY -->
-    <script>
-        // HERO slider
-        (function () {
-            const slides = document.querySelectorAll('.hero-slide');
-            let current = 0;
-            const show = i => slides.forEach((s, ix) => s.classList.toggle('active', ix === i));
-            setInterval(() => { current = (current + 1) % slides.length; show(current); }, 5000);
-            show(0);
-        })();
+      const beforeImg = document.getElementById('before-img');
+      const afterImg  = document.getElementById('after-img');
+      const spacer    = document.getElementById('ratio-spacer');
+      const flash     = document.getElementById('edit-flash');
+      const range     = box.querySelector('input[type="range"]');
+      const thumbs    = document.querySelectorAll('#edits .thumb');
 
-        // Dropdown menu (pod headerem)
-        (function () {
-            const header = document.getElementById('siteHeader');
-            const burger = document.getElementById('burger');
-            const panel = document.getElementById('mobilePanel');
-            const shade = document.getElementById('mobileShade');
+      let pos = 50;
 
-            function setHeaderHeightVar() {
-                const h = header.offsetHeight;
-                document.documentElement.style.setProperty('--hdrh', h + 'px');
-            }
+      const cache = new Map();
+      function preload(src){
+        if(cache.has(src)) return cache.get(src);
+        const p = new Promise((resolve)=>{
+          const img = new Image();
+          img.onload = ()=>resolve({w:img.naturalWidth||1, h:img.naturalHeight||1});
+          img.onerror= ()=>resolve({w:16, h:9});
+          img.src = src;
+        });
+        cache.set(src,p); return p;
+      }
 
-            const open = () => {
-                panel.classList.add('open');
-                shade.classList.add('open');
-                document.body.classList.add('overflow-hidden');
-                burger.setAttribute('aria-expanded', 'true');
-                burger.setAttribute('aria-label', 'Zamknij menu');
-            };
-            const close = () => {
-                panel.classList.remove('open');
-                shade.classList.remove('open');
-                document.body.classList.remove('overflow-hidden');
-                burger.setAttribute('aria-expanded', 'false');
-                burger.setAttribute('aria-label', 'Otwórz menu');
-            };
-            const toggle = () => panel.classList.contains('open') ? close() : open();
+      function setPos(p){ pos=Math.max(0,Math.min(100,p)); box.style.setProperty('--pos',pos+'%'); if(range) range.value=pos; }
+      function flashChange(){ if(!flash) return; flash.style.opacity='0.08'; setTimeout(()=>flash.style.opacity='0',160); }
 
-            burger.addEventListener('click', toggle);
-            shade.addEventListener('click', close);
-            panel.querySelectorAll('[data-close]').forEach(a => a.addEventListener('click', close));
-            window.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+      async function switchPair(b,a){
+        const [{w,h}] = await Promise.all([preload(a), preload(b)]);
+        spacer.style.paddingTop=((h/w)*100).toFixed(2)+'%';
+        beforeImg.src=b; afterImg.src=a; setPos(pos); flashChange();
+      }
 
-            // ustaw poprawny offset pod headerem
-            window.addEventListener('load', setHeaderHeightVar);
-            window.addEventListener('resize', setHeaderHeightVar);
-            setHeaderHeightVar();
-        })();
+      range?.addEventListener('input', e=>setPos(+e.target.value));
+      const move = x => { const r=box.getBoundingClientRect(); setPos(((x-r.left)/r.width)*100); };
+      box.addEventListener('pointerdown', e=>{ box.setPointerCapture(e.pointerId); move(e.clientX); });
+      box.addEventListener('pointermove', e=>{ if(e.buttons) move(e.clientX); });
 
-        // "reveal on scroll" – ABOUT
-        (function () {
-            const els = document.querySelectorAll('#about .reveal');
-            const io = new IntersectionObserver((entries) => {
-                entries.forEach(e => {
-                    if (e.isIntersecting) { e.target.classList.remove('opacity-0', 'translate-y-6'); io.unobserve(e.target); }
-                });
-            }, { threshold: 0.2 });
-            els.forEach(el => io.observe(el));
-        })();
+      box.addEventListener('keydown', e=>{
+        if(e.key==='ArrowLeft' || e.key==='ArrowRight'){
+          e.preventDefault();
+          const step = e.shiftKey ? 10 : 2;
+          setPos(pos + (e.key==='ArrowRight' ? step : -step));
+        }
+      });
 
-        // Edits – suwak + miniatury
-        (function () {
-            const box = document.getElementById('edit-compare');
-            if (!box) return;
+      thumbs.forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          thumbs.forEach(t=>{ t.dataset.active='false'; t.setAttribute('aria-pressed','false'); });
+          btn.dataset.active='true'; btn.setAttribute('aria-pressed','true');
+          switchPair(btn.dataset.before, btn.dataset.after);
+        });
+      });
 
-            const beforeImg = document.getElementById('before-img');
-            const afterImg = document.getElementById('after-img');
-            const spacer = document.getElementById('ratio-spacer');
-            const flash = document.getElementById('edit-flash');
-            const range = box.querySelector('input[type="range"]');
-            const thumbs = document.querySelectorAll('#edits .thumb');
+      thumbs.forEach(t=>{ preload(t.dataset.after); preload(t.dataset.before); });
+      const active = document.querySelector('#edits .thumb[data-active="true"]') || thumbs[0];
+      if(active) switchPair(active.dataset.before, active.dataset.after);
+      setPos(50);
+    })();
 
-            let pos = 50;
+    // rok w stopce
+    document.getElementById('year').textContent = new Date().getFullYear();
 
-            const cache = new Map();
-            function preload(src) {
-                if (cache.has(src)) return cache.get(src);
-                const p = new Promise((resolve) => {
-                    const img = new Image();
-                    img.onload = () => resolve({ w: img.naturalWidth || 1, h: img.naturalHeight || 1 });
-                    img.onerror = () => resolve({ w: 16, h: 9 });
-                    img.src = src;
-                });
-                cache.set(src, p); return p;
-            }
+    // płynne tło paska – 0 na górze, 1 przy #about
+    (function(){
+      const header = document.getElementById('siteHeader');
+      const about  = document.getElementById('about');
+      const headerH = () => header.offsetHeight;
+      const aboutTop= () => about.getBoundingClientRect().top + window.scrollY;
+      let limit=1;
+      function recalc(){
+        limit = Math.max(1, aboutTop() - headerH());
+        document.documentElement.style.setProperty('--hdrh', headerH()+'px'); // sync dla dropdownu
+        onScroll();
+      }
+      function onScroll(){
+        const y = window.scrollY||0;
+        const p = Math.min(1, Math.max(0, y/limit));
+        header.style.setProperty('--nav-alpha', p.toFixed(3));
+        header.classList.toggle('shadow-lg', p>0.05);
+      }
+      window.addEventListener('scroll', onScroll, {passive:true});
+      window.addEventListener('resize', recalc);
+      window.addEventListener('load', recalc);
+      recalc();
+    })();
+  </script>
 
-            function setPos(p) { pos = Math.max(0, Math.min(100, p)); box.style.setProperty('--pos', pos + '%'); if (range) range.value = pos; }
-            function flashChange() { if (!flash) return; flash.style.opacity = '0.08'; setTimeout(() => flash.style.opacity = '0', 160); }
-
-            async function switchPair(b, a) {
-                const [{ w, h }] = await Promise.all([preload(a), preload(b)]);
-                spacer.style.paddingTop = ((h / w) * 100).toFixed(2) + '%';
-                beforeImg.src = b; afterImg.src = a; setPos(pos); flashChange();
-            }
-
-            range?.addEventListener('input', e => setPos(+e.target.value));
-            const move = x => { const r = box.getBoundingClientRect(); setPos(((x - r.left) / r.width) * 100); };
-            box.addEventListener('pointerdown', e => { box.setPointerCapture(e.pointerId); move(e.clientX); });
-            box.addEventListener('pointermove', e => { if (e.buttons) move(e.clientX); });
-
-            box.addEventListener('keydown', e => {
-                if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
-                    e.preventDefault();
-                    const step = e.shiftKey ? 10 : 2;
-                    setPos(pos + (e.key === 'ArrowRight' ? step : -step));
-                }
-            });
-
-            thumbs.forEach(btn => {
-                btn.addEventListener('click', () => {
-                    thumbs.forEach(t => { t.dataset.active = 'false'; t.setAttribute('aria-pressed', 'false'); });
-                    btn.dataset.active = 'true'; btn.setAttribute('aria-pressed', 'true');
-                    switchPair(btn.dataset.before, btn.dataset.after);
-                });
-            });
-
-            thumbs.forEach(t => { preload(t.dataset.after); preload(t.dataset.before); });
-            const active = document.querySelector('#edits .thumb[data-active="true"]') || thumbs[0];
-            if (active) switchPair(active.dataset.before, active.dataset.after);
-            setPos(50);
-        })();
-
-        // rok w stopce
-        document.getElementById('year').textContent = new Date().getFullYear();
-
-        // płynne tło paska – 0 na górze, 1 przy #about
-        (function () {
-            const header = document.getElementById('siteHeader');
-            const about = document.getElementById('about');
-            const headerH = () => header.offsetHeight;
-            const aboutTop = () => about.getBoundingClientRect().top + window.scrollY;
-            let limit = 1;
-            function recalc() {
-                limit = Math.max(1, aboutTop() - headerH());
-                const h = headerH();
-                document.documentElement.style.setProperty('--hdrh', h + 'px'); // sync dla dropdownu
-                onScroll();
-            }
-            function onScroll() {
-                const y = window.scrollY || 0;
-                const p = Math.min(1, Math.max(0, y / limit));
-                header.style.setProperty('--nav-alpha', p.toFixed(3));
-                header.classList.toggle('shadow-lg', p > 0.05);
-            }
-            window.addEventListener('scroll', onScroll, { passive: true });
-            window.addEventListener('resize', recalc);
-            window.addEventListener('load', recalc);
-            recalc();
-        })();
-    </script>
-
-    <!-- Instagram embed -->
-    <script async src="https://www.instagram.com/embed.js"></script>
+  <!-- Instagram embed -->
+  <script async src="https://www.instagram.com/embed.js"></script>
 </body>
-
 </html>

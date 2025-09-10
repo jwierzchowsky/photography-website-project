@@ -1,0 +1,44 @@
+/* Dropdown pod headerem – domyślnie ukryty */
+:root { --hdrh: 64px; }
+
+#mobilePanel{
+  position: fixed;
+  left: 0; right: 0; top: var(--hdrh,64px);
+  z-index: 61;
+  background: #000;
+  border-bottom: 1px solid rgba(255,255,255,.1);
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transform: translateY(-8px);
+  transition:
+    transform .45s cubic-bezier(.22,1,.36,1),
+    max-height .45s cubic-bezier(.22,1,.36,1),
+    opacity .35s ease;
+}
+#mobilePanel.open{
+  max-height: 85vh;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+#mobileShade{
+  position: fixed;
+  left:0; right:0; top: var(--hdrh,64px); bottom:0;
+  z-index:60;
+  background: rgba(0,0,0,.6);
+  opacity:0; pointer-events:none;
+  transition: opacity .35s ease;
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+#mobileShade.open{ opacity:1; pointer-events:auto; }
+
+/* Burger → X (na aria-expanded) */
+#burger .line{
+  transition: transform .45s cubic-bezier(.22,1,.36,1), opacity .35s ease;
+  transform-origin: center;
+}
+#burger[aria-expanded="true"] .line:nth-child(1){ transform: translateY(7px) rotate(45deg); }
+#burger[aria-expanded="true"] .line:nth-child(2){ opacity: 0; }
+#burger[aria-expanded="true"] .line:nth-child(3){ transform: translateY(-7px) rotate(-45deg); }
